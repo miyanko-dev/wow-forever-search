@@ -1,14 +1,15 @@
-# wowhead-mcp
+# wow-info-mcp
 
-MCP server that looks up World of Warcraft data on Wowhead for every game version: items, spells, quests, NPCs, zones, guides and news.
+MCP server for World of Warcraft information from Wowhead, Warcraft Wiki and Raider.IO, for every game version: items, NPCs, quests, drop chances, lore, mechanics, news, Mythic+ affixes and characters.
 
 ## Tools
 
 | Tool | Input | Returns |
 |---|---|---|
-| `search` | `query`, `game` | Up to 10 matches with type, Wowhead URL and a one-line summary |
-| `get_page` | `url` | The page as text: tooltip, quick facts, map coordinates, quest text, related lists like drop sources with chances, the article or guide, and top comments |
-| `get_news` | `game` | The 10 latest news posts with date, URL and summary |
+| `search` | `query`, `game` | Warcraft Wiki articles with their Wowhead links, and Wowhead items, NPCs and quests whose names match |
+| `get_page` | `url` | A Wowhead page or a Warcraft Wiki article as text. Wowhead pages give the tooltip, quick facts, map coordinates, quest text, drop sources with chances, vendors, guides and top comments |
+| `get_news` | `game` | The 10 latest Wowhead news posts, plus this week's Mythic+ affixes for retail |
+| `character` | `region`, `realm`, `name` | A retail character's item level, Mythic+ score and best runs, raid progression and guild |
 
 `game` is one of these, `retail` by default:
 
@@ -20,6 +21,16 @@ MCP server that looks up World of Warcraft data on Wowhead for every game versio
 | `tbc`, `wotlk`, `cata`, `mop-classic` | Classic progression versions |
 | `ptr`, `ptr-2`, `classic-ptr` | Test realms |
 
+## Sources
+
+| Source | Used for | Read through |
+|---|---|---|
+| [Wowhead](https://www.wowhead.com) | Game database, guides, news | Pages, database listings, the tooltip API and RSS feeds |
+| [Warcraft Wiki](https://warcraft.wiki.gg) | Lore, mechanics, search | The MediaWiki API |
+| [Raider.IO](https://raider.io) | Characters, Mythic+ affixes | The public API |
+
+Every source is read the way it allows bots. The server follows each robots.txt and its AI content signals, names this repo in its User-Agent, caches answers for an hour and fetches nothing outside these hosts. Warcraft Wiki allows AI use for reference only, so answers built on it should cite and link instead of reproducing articles.
+
 ## Use it
 
 Requires Node 22 or later.
@@ -27,7 +38,7 @@ Requires Node 22 or later.
 Add it to Claude Code:
 
 ```sh
-claude mcp add wowhead -- npx -y github:miyanko-dev/wowhead-mcp
+claude mcp add wow-info -- npx -y github:miyanko-dev/wow-info-mcp
 ```
 
 Add it to any other MCP host, such as Claude Desktop:
@@ -35,7 +46,7 @@ Add it to any other MCP host, such as Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "wowhead": { "command": "npx", "args": ["-y", "github:miyanko-dev/wowhead-mcp"] }
+    "wow-info": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-info-mcp"] }
   }
 }
 ```
@@ -47,23 +58,10 @@ npm install
 npx @modelcontextprotocol/inspector node src/index.js
 ```
 
-## How it reads Wowhead
-
-Wowhead has no public API, so the server reads what the site itself loads:
-
-| Data | Source |
-|---|---|
-| Search | `www.wowhead.com/<game>/search/suggestions-template?q=` |
-| Pages | The page HTML and the data embedded in its scripts |
-| Tooltips | `nether.wowhead.com/<game>/tooltip/<type>/<id>` |
-| News | `www.wowhead.com/news/rss/<feed>` |
-
-To keep traffic low and honest, it caches every answer for an hour, names this repo in its User-Agent and fetches nothing but wowhead.com.
-
 ## Test
 
 ```sh
 npm test
 ```
 
-The tests read wowhead.com live, so a failure usually means a page layout changed.
+The tests read every source live, so a failure usually means a page layout or API changed.

@@ -65,6 +65,10 @@ export function truncate(text, max) {
   return text.length <= max ? text : `${text.slice(0, max).trimEnd()} [truncated]`;
 }
 
+export function section(heading, body) {
+  return body ? `## ${heading}\n${body}` : '';
+}
+
 function tidy(text) {
   return text
     .replace(/[^\S\n]+/g, ' ')

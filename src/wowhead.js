@@ -1,15 +1,16 @@
-import { decodeEntities, formatMoney, htmlToText, markupToText, truncate } from './text.js';
+import { request } from './http.js';
+import { decodeEntities, formatMoney, htmlToText, markupToText, section, truncate } from './text.js';
 
 const SITE = 'https://www.wowhead.com';
 const TOOLTIPS = 'https://nether.wowhead.com';
-const USER_AGENT = 'wowhead-mcp (+https://github.com/miyanko-dev/wowhead-mcp)';
 const PAGE_CHARS = 12_000;
 const LIST_ROWS = 12;
+const LOOKUP_ROWS = 5;
 
 // Each game version is a URL prefix on Wowhead; retail has none.
 export const GAMES = ['retail', 'classic', 'tbc', 'wotlk', 'cata', 'mop-classic', 'forever', 'ptr', 'ptr-2', 'classic-ptr'];
 
-// Wowhead type ids from search results and page data, mapped to their URL slugs.
+// Wowhead type ids from page data, mapped to their URL slugs.
 const TYPES = {
   1: 'npc', 2: 'object', 3: 'item', 4: 'item-set', 5: 'quest', 6: 'spell', 7: 'zone', 8: 'faction', 9: 'pet',
   10: 'achievement', 11: 'title', 12: 'event', 13: 'class', 14: 'race', 15: 'skill', 17: 'currency',
@@ -25,20 +26,26 @@ const ENTITY_TEMPLATES = new Set(['npc', 'object', 'item', 'itemset', 'quest', '
 // Related lists that hold media, community posts or cosmetics rather than game facts.
 const SKIPPED_LISTS = new Set(['comments', 'screenshots', 'videos', 'videos-english', 'sounds', 'outfits', 'outfit', 'transmog-with', 'same-model-as', 'news', 'news-comments']);
 
-export async function search(query, game = 'retail') {
-  const response = await request(`${SITE}/${prefix(game)}search/suggestions-template?q=${encodeURIComponent(query)}`);
-  const { results = [] } = await response.json();
-  const lines = results.filter((result) => TYPES[result.type]).map((result) => {
-    const path = result.type === 162 ? `news=${result.id}` : `${prefix(game)}${TYPES[result.type]}=${result.id}`;
-    const breadcrumb = result.pinBreadcrumb?.join(' > ');
-    const description = result.pinDescription && markupToText(htmlToText(result.pinDescription));
-    const about = [breadcrumb, description].filter(Boolean).join(': ').replace(/\s+/g, ' ');
-    return `- ${result.name} (${result.typeName}) ${SITE}/${path}${about ? `\n  ${truncate(about, 240)}` : ''}`;
-  });
-  return lines.length ? lines.join('\n') : `No Wowhead results for "${query}" in ${game}.`;
+// Database listings that /search would cover, keyed by their URL with the type of their rows.
+const LOOKUP_LISTS = { items: 'item', npcs: 'npc', quests: 'quest' };
+
+export function wowheadUrl(game, type, id) {
+  return `${SITE}/${prefix(game)}${type}=${id}`;
 }
 
-export async function getPage(input) {
+// Wowhead's robots.txt disallows /search for bots, so names are matched in the database listings,
+// like /forever/quests/name:library, which also cover content newer than any wiki.
+export async function lookup(query, game = 'retail') {
+  const lists = await Promise.all(Object.entries(LOOKUP_LISTS).map(async ([list, type]) => {
+    const response = await request(`${SITE}/${prefix(game)}${list}/name:${encodeURIComponent(query)}`);
+    const rows = listviews(await response.text()).find((view) => view.id === list)?.rows ?? [];
+    rows.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+    return rows.slice(0, LOOKUP_ROWS).map((row) => `- ${row.name ?? row.displayName} (${type}) ${wowheadUrl(game, type, row.id)}`);
+  }));
+  return lists.flat().join('\n');
+}
+
+export async function getWowheadPage(input) {
   const response = await request(pageUrl(input));
   const html = await response.text();
   const names = gathererNames(html);
@@ -103,12 +110,6 @@ function pageUrl(input) {
   return `${SITE}${url.pathname}${url.search}`;
 }
 
-async function request(url) {
-  const response = await fetch(url, { headers: { 'user-agent': USER_AGENT }, signal: AbortSignal.timeout(20_000) });
-  if (!response.ok) throw new Error(`Wowhead answered ${response.status} for ${url}`);
-  return response;
-}
-
 async function tooltip(game, type, id) {
   try {
     const response = await request(`${TOOLTIPS}/${prefix(game)}tooltip/${type}/${id}`);
@@ -119,24 +120,15 @@ async function tooltip(game, type, id) {
   }
 }
 
-function section(heading, body) {
-  return body ? `## ${heading}\n${body}` : '';
-}
-
 // Pages name every entity they link once, in WH.Gatherer.addData(type, env, {id: {name_enus}}).
 function gathererNames(html) {
   const names = new Map();
   for (const match of html.matchAll(/WH\.Gatherer\.addData\((\d+),\s*\d+,\s*(?=\{)/g)) {
     const type = TYPES[match[1]];
-    if (!type) continue;
-    try {
-      const entities = JSON.parse(balanced(html, match.index + match[0].length));
-      for (const [id, entity] of Object.entries(entities)) {
-        const name = entity.name_enus ?? entity.name;
-        if (name) names.set(`${type}=${id}`, name);
-      }
-    } catch {
-      // A batch that isn't plain JSON only costs its names.
+    const entities = type && parseJson(balanced(html, match.index + match[0].length));
+    for (const [id, entity] of Object.entries(entities ?? {})) {
+      const name = entity.name_enus ?? entity.name;
+      if (name) names.set(`${type}=${id}`, name);
     }
   }
   return names;
@@ -177,32 +169,33 @@ function locations(html) {
   }).join('\n');
 }
 
-// Related tabs are `new Listview({id: 'dropped-by', template: 'npc', data: [...]})`.
-function relatedLists(html, names) {
-  const lists = [];
+// Related tabs and database listings are `new Listview({id: 'dropped-by', template: 'npc', data: [...]})`,
+// where data is an inline array or a variable holding one, like `data: listviewitems`.
+function listviews(html) {
+  const views = [];
   for (const match of html.matchAll(/new Listview\(\s*(?=\{)/g)) {
     const config = balanced(html, match.index + match[0].length);
-    const dataAt = config.search(/\bdata"?\s*:\s*\[/);
-    if (dataAt < 0) continue;
-    const head = config.slice(0, dataAt);
+    const data = config.match(/\bdata"?\s*:\s*(\[|[A-Za-z_$][\w$]*(?=\s*[,}]))/);
+    if (!data) continue;
+    const head = config.slice(0, data.index);
     const id = head.match(/\bid"?\s*:\s*["']([^"']+)/)?.[1];
     const template = head.match(/\btemplate"?\s*:\s*["']([^"']+)/)?.[1];
     if (!id || SKIPPED_LISTS.has(id)) continue;
-    let rows;
-    try {
-      rows = JSON.parse(balanced(config, config.indexOf('[', dataAt)));
-    } catch {
-      continue;
-    }
-    if (!rows.length) continue;
+    const rows = data[1] === '[' ? parseJson(balanced(config, data.index + data[0].length - 1)) : readVar(html, data[1]);
+    if (Array.isArray(rows) && rows.length) views.push({ id, template, rows });
+  }
+  return views;
+}
+
+function relatedLists(html, names) {
+  return listviews(html).map(({ id, template, rows }) => {
 
     // Best quality first, then highest drop chance, so a capped list keeps what players ask about.
     rows.sort((a, b) => (b.quality ?? 0) - (a.quality ?? 0) || dropChance(b) - dropChance(a));
     const lines = rows.slice(0, LIST_ROWS).map((row) => listRow(row, template, names));
     if (rows.length > LIST_ROWS) lines.push(`- and ${rows.length - LIST_ROWS} more`);
-    lists.push(section(`${id} (${rows.length})`, lines.join('\n')));
-  }
-  return lists;
+    return section(`${id} (${rows.length})`, lines.join('\n'));
+  });
 }
 
 function listRow(row, template, names) {
@@ -239,9 +232,20 @@ function topComments(html, names) {
 // Pages assign some data more than once, like `var g_mapperData = {}` before the real value.
 function readVar(html, name) {
   const match = [...html.matchAll(new RegExp(`\\b${name}\\s*=\\s*(?=[[{])`, 'g'))].at(-1);
-  if (!match) return undefined;
+  return match ? parseJson(balanced(html, match.index + match[0].length)) : undefined;
+}
+
+// Matches a whole string first, so keys are only quoted outside strings.
+const BARE_KEY = /"(?:[^"\\]|\\.)*"|([{,]\s*)([A-Za-z_$][\w$]*)(\s*:)/g;
+
+// Page data is mostly JSON, but Wowhead appends some fields as JavaScript, like `firstseenpatch: 0`.
+function parseJson(text) {
+  return tryJson(text) ?? tryJson(text.replace(BARE_KEY, (match, before, key, colon) => (key ? `${before}"${key}"${colon}` : match)));
+}
+
+function tryJson(text) {
   try {
-    return JSON.parse(balanced(html, match.index + match[0].length));
+    return JSON.parse(text);
   } catch {
     return undefined;
   }
