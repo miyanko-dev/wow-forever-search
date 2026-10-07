@@ -1,23 +1,23 @@
-# wow-info-mcp
+# wow-forever-mcp
 
-MCP server for World of Warcraft information from Wowhead, Warcraft Wiki and Raider.IO, for every game version: items, NPCs, quests, drop chances, lore, mechanics, news, Mythic+ affixes and characters.
+MCP server for World of Warcraft information, focused on WoW Forever: items, NPCs, quests, spells, drop chances, coordinates, guides and news from Wowhead, plus character checkups from Blizzard's official armory and Raider.IO.
 
 ## Tools
 
 | Tool | Input | Returns |
 |---|---|---|
-| `search` | `query`, `game` | Warcraft Wiki articles with their Wowhead links, and Wowhead items, NPCs and quests whose names match |
-| `get_page` | `url` | A Wowhead page or a Warcraft Wiki article as text. Wowhead pages give the tooltip, quick facts, map coordinates, quest text, drop sources with chances, vendors, guides and top comments |
+| `search` | `query`, `game` | Wowhead items, NPCs, quests and spells whose names match, with their URLs |
+| `get_page` | `url` | A Wowhead page as text: tooltip, quick facts, map coordinates, quest text, drop sources with chances, vendors, abilities, guides and top comments |
 | `get_news` | `game` | The 10 latest Wowhead news posts, plus this week's Mythic+ affixes for retail |
-| `character` | `region`, `realm`, `name` | A retail character's item level, Mythic+ score and best runs, raid progression and guild |
+| `character` | `region`, `realm`, `name` | A retail character from the official armory (level, spec, item level, gear, guild, Mythic+ rating) and Raider.IO (Mythic+ score, best runs, raid progress) |
 
-`game` is one of these, `retail` by default:
+`game` is one of these, `forever` by default:
 
 | Value | Game |
 |---|---|
+| `forever` | WoW Forever |
 | `retail` | The current game |
 | `classic` | Classic Era |
-| `forever` | WoW Forever |
 | `tbc`, `wotlk`, `cata`, `mop-classic` | Classic progression versions |
 | `ptr`, `ptr-2`, `classic-ptr` | Test realms |
 
@@ -25,11 +25,13 @@ MCP server for World of Warcraft information from Wowhead, Warcraft Wiki and Rai
 
 | Source | Used for | Read through |
 |---|---|---|
-| [Wowhead](https://www.wowhead.com) | Game database, guides, news | Pages, database listings, the tooltip API and RSS feeds |
-| [Warcraft Wiki](https://warcraft.wiki.gg) | Lore, mechanics, search | The MediaWiki API |
-| [Raider.IO](https://raider.io) | Characters, Mythic+ affixes | The public API |
+| [Wowhead](https://www.wowhead.com/forever) | Database, guides and news for WoW Forever and every other version | Pages, database listings, the tooltip API and RSS feeds |
+| [Blizzard armory](https://worldofwarcraft.blizzard.com) | Official character profiles | The public armory pages |
+| [Raider.IO](https://raider.io) | Mythic+ runs, raid progress, weekly affixes | The public API |
 
-Every source is read the way it allows bots. The server follows each robots.txt and its AI content signals, names this repo in its User-Agent, caches answers for an hour and fetches nothing outside these hosts. Warcraft Wiki allows AI use for reference only, so answers built on it should cite and link instead of reproducing articles.
+Every source is read the way it allows bots. The server follows each robots.txt and its AI content signals, names this repo in its User-Agent, caches answers for an hour and fetches nothing outside these hosts.
+
+WoW Forever characters are not on Blizzard's armory yet, so `character` covers retail until Blizzard adds them. Left out as of 2026-10-07: Icy Veins, whose Cloudflare blocks every bot, Warcraft Logs, which has no WoW Forever logs, and Forever Logs, whose robots.txt disallows its API.
 
 ## Use it
 
@@ -38,7 +40,7 @@ Requires Node 22 or later.
 Add it to Claude Code:
 
 ```sh
-claude mcp add wow-info -- npx -y github:miyanko-dev/wow-info-mcp
+claude mcp add wow-forever -- npx -y github:miyanko-dev/wow-forever-mcp
 ```
 
 Add it to any other MCP host, such as Claude Desktop:
@@ -46,7 +48,7 @@ Add it to any other MCP host, such as Claude Desktop:
 ```json
 {
   "mcpServers": {
-    "wow-info": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-info-mcp"] }
+    "wow-forever": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever-mcp"] }
   }
 }
 ```

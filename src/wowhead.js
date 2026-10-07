@@ -1,3 +1,4 @@
+import { balanced, parseJson, readVar, stringEnd } from './embedded.js';
 import { request } from './http.js';
 import { decodeEntities, formatMoney, htmlToText, markupToText, section, truncate } from './text.js';
 
@@ -27,15 +28,15 @@ const ENTITY_TEMPLATES = new Set(['npc', 'object', 'item', 'itemset', 'quest', '
 const SKIPPED_LISTS = new Set(['comments', 'screenshots', 'videos', 'videos-english', 'sounds', 'outfits', 'outfit', 'transmog-with', 'same-model-as', 'news', 'news-comments']);
 
 // Database listings that /search would cover, keyed by their URL with the type of their rows.
-const LOOKUP_LISTS = { items: 'item', npcs: 'npc', quests: 'quest' };
+const LOOKUP_LISTS = { items: 'item', npcs: 'npc', quests: 'quest', spells: 'spell' };
 
-export function wowheadUrl(game, type, id) {
+function wowheadUrl(game, type, id) {
   return `${SITE}/${prefix(game)}${type}=${id}`;
 }
 
 // Wowhead's robots.txt disallows /search for bots, so names are matched in the database listings,
-// like /forever/quests/name:library, which also cover content newer than any wiki.
-export async function lookup(query, game = 'retail') {
+// like /forever/quests/name:library, which also cover the newest WoW Forever beta content.
+export async function lookup(query, game = 'forever') {
   const lists = await Promise.all(Object.entries(LOOKUP_LISTS).map(async ([list, type]) => {
     const response = await request(`${SITE}/${prefix(game)}${list}/name:${encodeURIComponent(query)}`);
     const rows = listviews(await response.text()).find((view) => view.id === list)?.rows ?? [];
@@ -73,7 +74,7 @@ export async function getWowheadPage(input) {
   return truncate(sections.filter(Boolean).join('\n\n'), PAGE_CHARS);
 }
 
-export async function getNews(game = 'retail') {
+export async function getNews(game = 'forever') {
   const response = await request(`${SITE}/news/rss/${newsFeed(game)}`);
   const xml = await response.text();
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map(([, item]) => {
@@ -227,49 +228,4 @@ function topComments(html, names) {
       return `- (${comment.rating > 0 ? '+' : ''}${comment.rating}, ${comment.date?.slice(0, 10)}) ${truncate(body, 500)}`;
     })
     .join('\n');
-}
-
-// Pages assign some data more than once, like `var g_mapperData = {}` before the real value.
-function readVar(html, name) {
-  const match = [...html.matchAll(new RegExp(`\\b${name}\\s*=\\s*(?=[[{])`, 'g'))].at(-1);
-  return match ? parseJson(balanced(html, match.index + match[0].length)) : undefined;
-}
-
-// Matches a whole string first, so keys are only quoted outside strings.
-const BARE_KEY = /"(?:[^"\\]|\\.)*"|([{,]\s*)([A-Za-z_$][\w$]*)(\s*:)/g;
-
-// Page data is mostly JSON, but Wowhead appends some fields as JavaScript, like `firstseenpatch: 0`.
-function parseJson(text) {
-  return tryJson(text) ?? tryJson(text.replace(BARE_KEY, (match, before, key, colon) => (key ? `${before}"${key}"${colon}` : match)));
-}
-
-function tryJson(text) {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
-}
-
-// The JSON array or object literal that opens at `start`, skipping brackets inside strings.
-function balanced(source, start) {
-  const open = source[start];
-  const close = open === '[' ? ']' : '}';
-  let depth = 0;
-  for (let i = start; i < source.length; i++) {
-    const char = source[i];
-    if (char === '"' || char === "'") i = stringEnd(source, i);
-    else if (char === open) depth++;
-    else if (char === close && --depth === 0) return source.slice(start, i + 1);
-  }
-  return '';
-}
-
-function stringEnd(source, start) {
-  const quote = source[start];
-  for (let i = start + 1; i < source.length; i++) {
-    if (source[i] === '\\') i++;
-    else if (source[i] === quote) return i;
-  }
-  return source.length;
 }

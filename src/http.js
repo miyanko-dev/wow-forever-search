@@ -1,4 +1,4 @@
-const USER_AGENT = 'wow-info-mcp (+https://github.com/miyanko-dev/wow-info-mcp)';
+const USER_AGENT = 'wow-forever-mcp (+https://github.com/miyanko-dev/wow-forever-mcp)';
 
 // Every source sees who is asking, so a site owner can reach us instead of blocking blindly.
 export async function request(url) {

@@ -4,17 +4,16 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import * as z from 'zod/v4';
 
 import pkg from '../package.json' with { type: 'json' };
-import { getAffixes, getCharacter, REGIONS } from './raiderio.js';
-import { section } from './text.js';
-import { getWikiPage, searchWiki } from './wiki.js';
+import { getArmoryCharacter } from './armory.js';
+import { getAffixes, getRaiderIo, REGIONS } from './raiderio.js';
 import { GAMES, getNews, getWowheadPage, lookup } from './wowhead.js';
 
 const CACHE_MS = 60 * 60 * 1000;
 const CACHE_SIZE = 300;
 const cache = new Map();
 
-const game = z.enum(GAMES).default('retail').describe(
-  'Game version: retail is the current game, classic is Classic Era, forever is WoW Forever, '
+const game = z.enum(GAMES).default('forever').describe(
+  'Game version: forever is WoW Forever, the default. retail is the current game, classic is Classic Era, '
   + 'tbc, wotlk, cata and mop-classic are the Classic progression versions, ptr, ptr-2 and classic-ptr are test realms',
 );
 const hints = { readOnlyHint: true, openWorldHint: true };
@@ -35,21 +34,15 @@ function text(value) {
 }
 
 async function search(query, game) {
-  const [wiki, wowhead] = await Promise.allSettled([searchWiki(query, game), lookup(query, game)]);
-  const parts = [settled('Warcraft Wiki', wiki), settled(`Wowhead database (${game})`, wowhead)].filter(Boolean);
-  return parts.join('\n\n') || `Nothing found for "${query}". Try fewer or other words, in English.`;
-}
-
-// A source that failed still shows up, so the model can tell an outage from an empty result.
-function settled(heading, result) {
-  return section(heading, result.status === 'rejected' ? `Error: ${result.reason.message}` : result.value);
+  const rows = await lookup(query, game);
+  return rows || `Nothing on Wowhead named like "${query}" in ${game}. Try an English name, fewer words, get_news, `
+    + `or the guide hub https://www.wowhead.com/${game === 'retail' ? '' : `${game}/`}guides with get_page.`;
 }
 
 function readPage(url) {
   const { hostname } = new URL(url, 'https://www.wowhead.com/');
-  if (hostname === 'warcraft.wiki.gg') return getWikiPage(url);
   if (hostname === 'www.wowhead.com' || hostname === 'wowhead.com') return getWowheadPage(url);
-  throw new Error(`get_page reads www.wowhead.com and warcraft.wiki.gg pages, not ${url}. For Raider.IO characters, use the character tool.`);
+  throw new Error(`get_page reads www.wowhead.com pages, not ${url}. For a character, use the character tool.`);
 }
 
 async function news(game) {
@@ -57,45 +50,56 @@ async function news(game) {
   return [affixes, posts].filter(Boolean).join('\n\n');
 }
 
+// The armory is the official profile; Raider.IO adds Mythic+ runs. Either one alone still answers.
+async function character(region, realm, name) {
+  const [armory, raiderIo] = await Promise.allSettled([getArmoryCharacter(region, realm, name), getRaiderIo(region, realm, name)]);
+  if (armory.status === 'rejected' && raiderIo.status === 'rejected') throw armory.reason;
+  return [
+    armory.status === 'fulfilled' ? armory.value : `Armory: ${armory.reason.message}`,
+    raiderIo.status === 'fulfilled' ? raiderIo.value : `Raider.IO: ${raiderIo.reason.message}`,
+  ].join('\n\n');
+}
+
 serveStdio(() => {
-  const server = new McpServer({ name: 'wow-info', version: pkg.version });
+  const server = new McpServer({ name: 'wow-forever', version: pkg.version });
 
   server.registerTool('search', {
-    title: 'Search WoW sources',
-    description: 'Find World of Warcraft topics, items, NPCs and quests. Searches Warcraft Wiki (lore, mechanics, classes, '
-      + 'zones, events) and Wowhead\'s database for the game version. Returns links to open with get_page.',
-    inputSchema: z.object({ query: z.string().min(1).max(100).describe('Name or keywords, in English'), game }),
+    title: 'Search Wowhead',
+    description: 'Find items, NPCs, quests and spells by name in Wowhead\'s database for a game version, WoW Forever by default. '
+      + 'Returns Wowhead URLs to open with get_page.',
+    inputSchema: z.object({ query: z.string().min(1).max(100).describe('Name or part of it, in English'), game }),
     annotations: hints,
   }, async ({ query, game }) => text(await cached(`search:${game}:${query.toLowerCase()}`, () => search(query, game))));
 
   server.registerTool('get_page', {
-    title: 'Read a WoW page',
-    description: 'Read a Wowhead or Warcraft Wiki page as text. Wowhead pages give the tooltip, quick facts, map coordinates, '
-      + 'quest text, drop sources with chances, vendors, rewards, guides and top comments. Wiki articles give lore and mechanics.',
+    title: 'Read a Wowhead page',
+    description: 'Read a Wowhead page as text: tooltip, quick facts, map coordinates, quest text, drop sources with chances, '
+      + 'vendors, rewards, abilities, guides and top comments. Guide hubs like https://www.wowhead.com/forever/guides list the guides.',
     inputSchema: z.object({
-      url: z.string().min(1).max(300).describe('URL from search results or the user, like https://www.wowhead.com/classic/item=19019'),
+      url: z.string().min(1).max(300).describe('Wowhead URL from search results or the user, like https://www.wowhead.com/forever/item=19019'),
     }),
     annotations: hints,
   }, async ({ url }) => text(await cached(`page:${url}`, () => readPage(url))));
 
   server.registerTool('get_news', {
     title: 'Latest WoW news',
-    description: 'The 10 latest Wowhead news posts for a game version, newest first, with dates, URLs and summaries. '
-      + 'For retail it also lists this week\'s Mythic+ affixes from Raider.IO.',
+    description: 'The 10 latest Wowhead news posts for a game version, WoW Forever by default, newest first, with dates, URLs '
+      + 'and summaries. For retail it also lists this week\'s Mythic+ affixes from Raider.IO.',
     inputSchema: z.object({ game }),
     annotations: hints,
   }, async ({ game }) => text(await cached(`news:${game}`, () => news(game))));
 
   server.registerTool('character', {
-    title: 'Raider.IO character',
-    description: 'Look up a retail character on Raider.IO: item level, Mythic+ score and best runs, raid progression and guild.',
+    title: 'Character checkup',
+    description: 'Check a retail character on Blizzard\'s official armory and Raider.IO: level, spec, item level and gear, guild, '
+      + 'Mythic+ rating and best runs, raid progress. WoW Forever characters are not on the armory yet.',
     inputSchema: z.object({
       region: z.enum(REGIONS).describe('Region of the realm'),
       realm: z.string().min(1).max(60).describe('Realm name, like Tarren Mill'),
       name: z.string().min(1).max(40).describe('Character name'),
     }),
     annotations: hints,
-  }, async ({ region, realm, name }) => text(await cached(`character:${region}:${realm}:${name}`.toLowerCase(), () => getCharacter(region, realm, name))));
+  }, async ({ region, realm, name }) => text(await cached(`character:${region}:${realm}:${name}`.toLowerCase(), () => character(region, realm, name))));
 
   return server;
 });

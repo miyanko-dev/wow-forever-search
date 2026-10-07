@@ -1,23 +1,18 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { getAffixes, getCharacter } from '../src/raiderio.js';
+import { getArmoryCharacter } from '../src/armory.js';
+import { getAffixes, getRaiderIo } from '../src/raiderio.js';
 import { htmlToText, markupToText } from '../src/text.js';
-import { getWikiPage, searchWiki } from '../src/wiki.js';
 import { getNews, getWowheadPage, lookup } from '../src/wowhead.js';
 
 // The live checks read every source, so they fail when a layout or API the parsers rely on changes.
 
-test('wiki search returns articles with Wowhead links for the chosen game', async () => {
-  const text = await searchWiki('thunderfury', 'classic');
-  assert.match(text, /- Thunderfury, Blessed Blade of the Windseeker https:\/\/warcraft\.wiki\.gg\/wiki\//);
-  assert.match(text, /Wowhead: https:\/\/www\.wowhead\.com\/classic\/item=19019/);
-});
-
-test('Wowhead lookup finds items, NPCs and quests by name in the database listings', async () => {
-  const text = await lookup('thunderfury', 'forever');
+test('Wowhead lookup finds WoW Forever items, quests and spells by name in the database listings', async () => {
+  const text = await lookup('thunderfury');
   assert.match(text, /- Thunderfury, Blessed Blade of the Windseeker \(item\) https:\/\/www\.wowhead\.com\/forever\/item=19019/);
   assert.match(text, /- Rise, Thunderfury! \(quest\) https:\/\/www\.wowhead\.com\/forever\/quest=7787/);
+  assert.match(await lookup('shifting power'), /- Shifting Power \(spell\) https:\/\/www\.wowhead\.com\/forever\/spell=\d+/);
 });
 
 test('lookups never request paths Wowhead disallows for bots', async () => {
@@ -28,7 +23,7 @@ test('lookups never request paths Wowhead disallows for bots', async () => {
     return realFetch(url, init);
   };
   try {
-    await Promise.all([lookup('onyxia', 'classic'), searchWiki('onyxia', 'classic')]);
+    await Promise.all([lookup('onyxia'), lookup('onyxia', 'classic')]);
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -60,29 +55,28 @@ test('guide page has the guide body', async () => {
   assert.match(text, /## Article\n[\s\S]*Highlord Demetrian/);
 });
 
-test('wiki page has the article text and its Wowhead links', async () => {
-  const text = await getWikiPage('https://warcraft.wiki.gg/wiki/Thunderfury,_Blessed_Blade_of_the_Windseeker');
-  assert.match(text, /^# Thunderfury, Blessed Blade of the Windseeker - Warcraft Wiki/);
-  assert.match(text, /legendary sword/);
-  assert.match(text, /## Wowhead\n[\s\S]*https:\/\/www\.wowhead\.com\/item=19019/);
-});
-
 test('news lists recent posts with dates and links', async () => {
   const text = await getNews('forever');
   assert.match(text, /^- \d{4}-\d{2}-\d{2} .+\n {2}https:\/\/www\.wowhead\.com\/news=\d+/);
 });
 
-test('Raider.IO returns a character profile, this week\'s affixes and clear misses', async () => {
-  const character = await getCharacter('eu', 'Tarren Mill', 'Naowh');
-  assert.match(character, /^# Naowh, .+, Tarren Mill EU\nhttps:\/\/raider\.io\/characters\/eu\/tarren-mill\/Naowh/);
-  assert.match(await getAffixes(), /^## This week's Mythic\+ affixes: .+\n- /);
-  await assert.rejects(getCharacter('eu', 'Tarren Mill', 'Zzqqxxnobody'), /Could not find requested character/);
+test('the official armory returns a retail character with gear, and a clear miss', async () => {
+  const text = await getArmoryCharacter('eu', 'Draenor', 'Moadzarella');
+  assert.match(text, /^# Moadzarella, level \d+ .+, Draenor EU\nhttps:\/\/worldofwarcraft\.blizzard\.com\/en-us\/.+\/moadzarella/);
+  assert.match(text, /## Gear\n- \w+/);
+  await assert.rejects(getArmoryCharacter('eu', 'Draenor', 'Zzqqxxnobody'), /armory has no character Zzqqxxnobody on Draenor \(EU\)/);
 });
 
-test('get_page sources refuse other hosts', async () => {
+test('Raider.IO adds Mythic+ runs, this week\'s affixes and clear misses', async () => {
+  const text = await getRaiderIo('eu', 'Draenor', 'Moadzarella');
+  assert.match(text, /^## Raider\.IO\nhttps:\/\/raider\.io\/characters\/eu\/draenor\/Moadzarella\n- Mythic\+ score/);
+  assert.match(await getAffixes(), /^## This week's Mythic\+ affixes: .+\n- /);
+  await assert.rejects(getRaiderIo('eu', 'Draenor', 'Zzqqxxnobody'), /Could not find requested character/);
+});
+
+test('Wowhead pages refuse other hosts', async () => {
   await assert.rejects(getWowheadPage('https://example.com/item=1'), /Not a Wowhead URL/);
   await assert.rejects(getWowheadPage('//example.com/item=1'), /Not a Wowhead URL/);
-  await assert.rejects(getWikiPage('https://warcraft.wiki.gg/index.php'), /Not a Warcraft Wiki article/);
 });
 
 test('markup becomes text with entity names and coins', () => {
