@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { getArmoryCharacter } from '../src/armory.js';
-import { getAffixes, getRaiderIo } from '../src/raiderio.js';
 import { htmlToText, markupToText } from '../src/text.js';
 import { getNews, getWowheadPage, lookup, pagePart } from '../src/wowhead.js';
 
@@ -23,7 +21,7 @@ test('lookups never request paths Wowhead disallows for bots', async () => {
     return realFetch(url, init);
   };
   try {
-    await Promise.all([lookup('onyxia'), lookup('onyxia', 'classic')]);
+    await lookup('onyxia');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -31,47 +29,47 @@ test('lookups never request paths Wowhead disallows for bots', async () => {
   for (const url of urls) assert.doesNotMatch(url, /wowhead\.com\/(?:[a-z-]+\/)?(?:search|list|account|random)\b/);
 });
 
-test('item page has tooltip, drop sources with chances and comments', async () => {
-  const text = await getWowheadPage('https://www.wowhead.com/classic/item=18563');
+test('item page has tooltip and drop sources with chances', async () => {
+  const text = await getWowheadPage('https://www.wowhead.com/forever/item=18563');
   assert.match(text, /## Tooltip\nBindings of the Windseeker\nItem Level 70/);
   assert.match(text, /- Baron Geddon \(npc=12056\): [\d.]+% chance, Molten Core/);
-  assert.match(text, /## Top comments\n- \(\+\d+, \d{4}-\d{2}-\d{2}\)/);
+});
+
+test('comments come only from WoW Forever, never from older versions', async () => {
+  const old = await getWowheadPage('forever/item=19019');
+  assert.doesNotMatch(old, /## Top comments\n[\s\S]*\((?:[+-]?\d+), (?:2005|2006|2007|2019|2020)-/);
+  const forever = await getWowheadPage('forever/item=8345');
+  assert.match(forever, /## Top comments\n- \([+-]?\d+, 2026-\d{2}-\d{2}\) .*Shifting Power/);
+});
+
+test('pages of other versions are refused, also behind a redirect', async () => {
+  await assert.rejects(getWowheadPage('https://www.wowhead.com/item=19019'), /is not a WoW Forever page/);
+  await assert.rejects(getWowheadPage('classic/item=19019'), /is not a WoW Forever page/);
+  await assert.rejects(getWowheadPage('forever/guide=7671'), /classic\/guide\/.+ is not a WoW Forever page/);
 });
 
 test('quest page has the quest text', async () => {
-  const text = await getWowheadPage('classic/quest=7787');
+  const text = await getWowheadPage('forever/quest=7787');
   assert.match(text, /## Description\nYou have defeated the Wind Seeker/);
 });
 
 test('npc page has map coordinates and abilities', async () => {
-  const npc = await getWowheadPage('classic/npc=14347');
+  const npc = await getWowheadPage('forever/npc=14347');
   assert.match(npc, /## Locations\n- Silithus: \d+\.?\d*, \d+\.?\d*/);
-  const boss = await getWowheadPage('classic/npc=12056');
+  const boss = await getWowheadPage('forever/npc=12056');
   assert.match(boss, /## abilities \(\d+\)\n[\s\S]*Living Bomb \(spell=20475\)/);
 });
 
 test('guide page has the guide body', async () => {
-  const text = await getWowheadPage('classic/guide=7671');
-  assert.match(text, /## Article\n[\s\S]*Highlord Demetrian/);
+  const text = await getWowheadPage('forever/guide=35009');
+  assert.match(text, /## Article\n[\s\S]*Holy/);
 });
 
-test('news lists recent posts with dates and links', async () => {
-  const text = await getNews('forever');
+test('news lists recent WoW Forever posts, and their links pass as Forever pages', async () => {
+  const text = await getNews();
   assert.match(text, /^- \d{4}-\d{2}-\d{2} .+\n {2}https:\/\/www\.wowhead\.com\/news=\d+/);
-});
-
-test('the official armory returns a retail character with gear, and a clear miss', async () => {
-  const text = await getArmoryCharacter('eu', 'Draenor', 'Moadzarella');
-  assert.match(text, /^# Moadzarella, level \d+ .+, Draenor EU\nhttps:\/\/worldofwarcraft\.blizzard\.com\/en-us\/.+\/moadzarella/);
-  assert.match(text, /## Gear\n- \w+/);
-  await assert.rejects(getArmoryCharacter('eu', 'Draenor', 'Zzqqxxnobody'), /armory has no character Zzqqxxnobody on Draenor \(EU\)/);
-});
-
-test('Raider.IO adds Mythic+ runs, this week\'s affixes and clear misses', async () => {
-  const text = await getRaiderIo('eu', 'Draenor', 'Moadzarella');
-  assert.match(text, /^## Raider\.IO\nhttps:\/\/raider\.io\/characters\/eu\/draenor\/Moadzarella\n- Mythic\+ score/);
-  assert.match(await getAffixes(), /^## This week's Mythic\+ affixes: .+\n- /);
-  await assert.rejects(getRaiderIo('eu', 'Draenor', 'Zzqqxxnobody'), /Could not find requested character/);
+  const link = text.match(/https:\/\/www\.wowhead\.com\/news=\d+/)[0];
+  assert.match(await getWowheadPage(link), /^# .+\nhttps:\/\/www\.wowhead\.com\/forever\/news\//);
 });
 
 test('Wowhead pages refuse other hosts', async () => {

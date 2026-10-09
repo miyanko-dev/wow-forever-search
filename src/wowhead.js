@@ -3,13 +3,16 @@ import { request } from './http.js';
 import { decodeEntities, formatMoney, htmlToText, markupToText, section, truncate } from './text.js';
 
 const SITE = 'https://www.wowhead.com';
-const TOOLTIPS = 'https://nether.wowhead.com';
+const FOREVER = `${SITE}/forever`;
+const TOOLTIPS = 'https://nether.wowhead.com/forever';
 const PAGE_CHARS = 12_000;
 const LIST_ROWS = 12;
 const LOOKUP_ROWS = 5;
 
-// Each game version is a URL prefix on Wowhead; retail has none.
-export const GAMES = ['retail', 'classic', 'tbc', 'wotlk', 'cata', 'mop-classic', 'forever', 'ptr', 'ptr-2', 'classic-ptr'];
+// Wowhead labels each page and comment with its game version. Only WoW Forever passes, so no answer
+// mixes in Retail or Classic data, and comments from older versions with other mechanics stay out.
+const FOREVER_LABEL = '"dataTree":"Forever"';
+const FOREVER_COMMENTS = 16;
 
 // Wowhead type ids from page data, mapped to their URL slugs.
 const TYPES = {
@@ -30,18 +33,18 @@ const SKIPPED_LISTS = new Set(['comments', 'screenshots', 'videos', 'videos-engl
 // Database listings that /search would cover, keyed by their URL with the type of their rows.
 const LOOKUP_LISTS = { items: 'item', npcs: 'npc', quests: 'quest', spells: 'spell' };
 
-function wowheadUrl(game, type, id) {
-  return `${SITE}/${prefix(game)}${type}=${id}`;
+function wowheadUrl(type, id) {
+  return `${FOREVER}/${type}=${id}`;
 }
 
 // Wowhead's robots.txt disallows /search for bots, so names are matched in the database listings,
 // like /forever/quests/name:library, which also cover the newest WoW Forever beta content.
-export async function lookup(query, game = 'forever') {
+export async function lookup(query) {
   const lists = await Promise.all(Object.entries(LOOKUP_LISTS).map(async ([list, type]) => {
-    const response = await request(`${SITE}/${prefix(game)}${list}/name:${encodeURIComponent(query)}`);
+    const response = await request(`${FOREVER}/${list}/name:${encodeURIComponent(query)}`);
     const rows = listviews(await response.text()).find((view) => view.id === list)?.rows ?? [];
     rows.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
-    return rows.slice(0, LOOKUP_ROWS).map((row) => `- ${row.name ?? row.displayName} (${type}) ${wowheadUrl(game, type, row.id)}`);
+    return rows.slice(0, LOOKUP_ROWS).map((row) => `- ${row.name ?? row.displayName} (${type}) ${wowheadUrl(type, row.id)}`);
   }));
   return lists.flat().join('\n');
 }
@@ -49,6 +52,11 @@ export async function lookup(query, game = 'forever') {
 export async function getWowheadPage(input) {
   const response = await request(pageUrl(input));
   const html = await response.text();
+
+  // Checked after redirects, which can lead from a /forever/ link to a Classic page.
+  if (!html.includes(FOREVER_LABEL)) {
+    throw new Error(`${response.url} is not a WoW Forever page. Use search, get_news or a link under ${FOREVER}/.`);
+  }
   const names = gathererNames(html);
   const blocks = markupBlocks(html, names);
   const pageInfo = html.match(/g_pageInfo\s*=\s*\{[^}]*\}/)?.[0] ?? '';
@@ -63,7 +71,7 @@ export async function getWowheadPage(input) {
   const sections = [
     `# ${decodeEntities(html.match(/<title>([^<]*)/)?.[1] ?? '')}\n${response.url}`,
     decodeEntities(html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? ''),
-    TOOLTIP_TYPES.has(type) ? section('Tooltip', await tooltip(gameOf(response.url), type, id)) : '',
+    TOOLTIP_TYPES.has(type) ? section('Tooltip', await tooltip(type, id)) : '',
     section('Quick facts', quickFacts.map((block) => block.text).join('\n')),
     section('Locations', locations(html)),
     isEntity ? section('Page text', truncate(mainText(html), 3000)) : '',
@@ -85,8 +93,8 @@ export function pagePart(text, offset = 0) {
     + `Call get_page with offset ${end} for the next part.]`;
 }
 
-export async function getNews(game = 'forever') {
-  const response = await request(`${SITE}/news/rss/${newsFeed(game)}`);
+export async function getNews() {
+  const response = await request(`${SITE}/news/rss/forever`);
   const xml = await response.text();
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map(([, item]) => {
     const field = (name) => decodeEntities(item.match(new RegExp(`<${name}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?</${name}>`))?.[1] ?? '');
@@ -98,33 +106,18 @@ export async function getNews(game = 'forever') {
   return items.join('\n') || 'No news found.';
 }
 
-function prefix(game) {
-  return game === 'retail' ? '' : `${game}/`;
-}
-
-function gameOf(url) {
-  const first = new URL(url).pathname.split('/')[1];
-  return GAMES.includes(first) ? first : 'retail';
-}
-
-// Wowhead's feeds: the classic series covers every Classic version, WoW Forever also has its own.
-function newsFeed(game) {
-  if (game === 'forever') return 'forever';
-  return ['retail', 'ptr', 'ptr-2'].includes(game) ? 'retail' : 'classic-series';
-}
-
 // Only Wowhead pages are fetched, so the tool can't be pointed at other hosts.
 function pageUrl(input) {
   const url = new URL(input, `${SITE}/`);
   if (url.hostname !== 'www.wowhead.com' && url.hostname !== 'wowhead.com') {
-    throw new Error(`Not a Wowhead URL: ${input}. Pass a URL like ${SITE}/classic/item=19019.`);
+    throw new Error(`Not a Wowhead URL: ${input}. Pass a URL like ${FOREVER}/item=19019.`);
   }
   return `${SITE}${url.pathname}${url.search}`;
 }
 
-async function tooltip(game, type, id) {
+async function tooltip(type, id) {
   try {
-    const response = await request(`${TOOLTIPS}/${prefix(game)}tooltip/${type}/${id}`);
+    const response = await request(`${TOOLTIPS}/tooltip/${type}/${id}`);
     return htmlToText((await response.json()).tooltip ?? '');
   } catch {
     // The rest of the page still answers most questions.
@@ -231,7 +224,7 @@ function dropChance(row) {
 function topComments(html, names) {
   const comments = readVar(html, 'lv_comments0') ?? [];
   return comments
-    .filter((comment) => !comment.deleted && !comment.outofdate)
+    .filter((comment) => comment.dataTree === FOREVER_COMMENTS && !comment.deleted && !comment.outofdate)
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 3)
     .map((comment) => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0 (2026-10-09)
+
+- WoW Forever only. `get_page` refuses pages Wowhead labels as another version, also behind a redirect, and comments come only from WoW Forever instead of 2005 to 2020.
+- Removed the `game` input from every tool and the retail `character` tool with its Blizzard armory and Raider.IO sources.
+- MCP-only setups move to `#semver:^2`. Setups on `^1` keep 1.1.0.
+
 ## 1.1.0 (2026-10-09)
 
 - Renamed to `wow-forever-search`: repo, plugin, marketplace, skill, MCP server and package. Reinstall with `/plugin marketplace add miyanko-dev/wow-forever-search`. MCP-only setups keep working through GitHub's redirect, and the README has the new name.

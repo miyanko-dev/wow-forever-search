@@ -1,16 +1,17 @@
 ---
 name: wow-forever-search
-description: "answer any question about wow forever, and other world of warcraft versions when named, through the wow-forever-search mcp tools (search, get_page, get_news, character). use for items, drops, quests, npcs, spells, talents, classes, professions, guides, news, patch notes, beta builds and class changes, retail character checkups, and whenever a wowhead link appears. looks everything up instead of answering from memory, and turns long patch notes into short per-class overviews with before and after values and source links."
+description: "answer any question about wow forever through the wow-forever-search mcp tools (search, get_page, get_news), which read only wow forever data. use for items, drops, quests, npcs, spells, talents, classes, professions, guides, news, patch notes, beta builds and class changes, and whenever a wowhead forever link appears. looks everything up instead of answering from memory, and turns long patch notes into short per-class overviews with before and after values and source links."
 ---
 
 # WoW Forever Search
 
-Answer questions about WoW Forever, or another World of Warcraft version when the user names one, from the wow-forever-search MCP tools. Look everything up, never answer stats, drop chances, coordinates, quest steps or numbers from memory.
+Answer questions about WoW Forever from the wow-forever-search MCP tools. Look everything up, never answer stats, drop chances, coordinates, quest steps or numbers from memory, because WoW Forever changes them from the original game.
 
-## Version
+## WoW Forever only
 
-- Use `game: forever` unless the user names another version, like retail, classic or mop-classic.
-- Name the version in the first line of every answer, like "WoW Forever beta:", so a wrong guess shows at once.
+- The tools read only WoW Forever data: Wowhead's Forever database, guides, news and comments written for Forever. `get_page` refuses pages of other versions.
+- If the user asks about Retail, Classic or another version, say in one sentence that this plugin covers WoW Forever only.
+- If the user pastes a Retail or Classic link, open the same path under `https://www.wowhead.com/forever/` instead, like `/forever/item=19019`.
 
 ## Find the source
 
@@ -20,7 +21,6 @@ Answer questions about WoW Forever, or another World of Warcraft version when th
 | Recent changes, a patch, a beta build | `get_news`, then `get_page` on the matching post |
 | An item, quest, NPC or spell name | `search` with the English name, then `get_page` on the best match |
 | A topic without a name | `get_page` on the guide hub, like `https://www.wowhead.com/forever/guides` |
-| A retail character | `character` with region, realm and name |
 
 ## Read all of it
 
@@ -36,7 +36,7 @@ Reading patch notes:
 
 ## Answer
 
-- First line is the answer, with the version.
+- First line is the answer.
 - Patch notes and class changes: one `##` section per class or topic the user asked for, each a table with the columns Change, Before → after and Effect. Effect is buff, nerf, no visible change or wording only, plus a few words on why it matters.
 - Order rows by impact, biggest first. Put internal-only changes in one closing row or sentence.
 - Give percentages where they help, like "about 33% less".
