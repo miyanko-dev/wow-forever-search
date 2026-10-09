@@ -1,12 +1,12 @@
 {
-  "name": "wow-forever-mcp",
-  "version": "3.1.0",
+  "name": "wow-forever",
+  "version": "1.0.0",
   "private": true,
-  "description": "MCP server for World of Warcraft information focused on WoW Forever, from Wowhead, the official armory and Raider.IO.",
+  "description": "Claude Code plugin and MCP server for WoW Forever information from Wowhead, plus retail characters from the official armory and Raider.IO.",
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "wow-forever-mcp": "src/index.js"
+    "wow-forever": "src/index.js"
   },
   "files": [
     "src"

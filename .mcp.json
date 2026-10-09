@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "wow-forever": {
+      "command": "npx",
+      "args": ["-y", "github:miyanko-dev/wow-forever"]
+    }
+  }
+}

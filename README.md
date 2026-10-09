@@ -1,6 +1,65 @@
-# wow-forever-mcp
+# WoW Forever
 
-MCP server for World of Warcraft information, focused on WoW Forever: items, NPCs, quests, spells, drop chances, coordinates, guides and news from Wowhead, plus character checkups from Blizzard's official armory and Raider.IO.
+Lets Claude answer anything about WoW Forever: items, drops, quests, NPCs, spells, talents, guides, news and patch notes. A bundled MCP server reads Wowhead in full, and a skill turns what it finds into short answers with sources. Other World of Warcraft versions work when you name them.
+
+## What it does
+
+- Looks every fact up on Wowhead instead of answering from memory: stats, drop chances, coordinates, quest steps.
+- Sums up patch notes and beta builds per class, with before and after values and whether each change is a buff, a nerf or internal only.
+- Reads long pages, like full patch notes, in parts, so nothing gets cut off.
+- Checks retail characters on Blizzard's armory and Raider.IO.
+- Names the game version in every answer, WoW Forever unless you ask for another.
+
+## Install
+
+Requires Node 22 or later and git.
+
+### Claude Code
+
+Works in the terminal, the Code tab of the Claude desktop app and the IDE extensions.
+
+```
+/plugin marketplace add miyanko-dev/wow-forever
+/plugin install wow-forever@wow-forever
+```
+
+### Other apps
+
+The MCP server runs in any MCP host. For Codex:
+
+```sh
+codex mcp add wow-forever -- npx -y github:miyanko-dev/wow-forever
+```
+
+For the Claude desktop app, add this to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "wow-forever": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever"] }
+  }
+}
+```
+
+The skill alone, for agents that read Agent Skills:
+
+```sh
+npx skills add miyanko-dev/wow-forever
+```
+
+## Usage
+
+```
+/wow-forever <question or Wowhead link>
+```
+
+Examples:
+
+- `/wow-forever paladin, hunter, priest and rogue changes in the latest beta build`
+- `/wow-forever where does Thunderfury drop?`
+- `/wow-forever how do I start the Onyxia attunement in classic?`
+
+It also triggers on its own for WoW questions and Wowhead links.
 
 ## Tools
 
@@ -29,41 +88,17 @@ MCP server for World of Warcraft information, focused on WoW Forever: items, NPC
 | [Blizzard armory](https://worldofwarcraft.blizzard.com) | Official character profiles | The public armory pages |
 | [Raider.IO](https://raider.io) | Mythic+ runs, raid progress, weekly affixes | The public API |
 
-Every source is read the way it allows bots. The server follows each robots.txt and its AI content signals, names this repo in its User-Agent, caches answers for an hour and fetches nothing outside these hosts.
+The server follows each site's robots.txt, names this repo in its User-Agent, caches answers for an hour and fetches nothing outside these hosts. It is for personal, non-commercial use. The data belongs to Wowhead, Blizzard and Raider.IO, and their terms apply.
 
-WoW Forever characters are not on Blizzard's armory yet, so `character` covers retail until Blizzard adds them. Left out as of 2026-10-07: Icy Veins, whose Cloudflare blocks every bot, Warcraft Logs, which has no WoW Forever logs, and Forever Logs, whose robots.txt disallows its API.
+WoW Forever characters are not on Blizzard's armory yet, so `character` covers retail until Blizzard adds them.
 
-## Use it
-
-Requires Node 22 or later.
-
-Add it to Claude Code:
-
-```sh
-claude mcp add wow-forever -- npx -y github:miyanko-dev/wow-forever-mcp
-```
-
-Add it to any other MCP host, such as Claude Desktop:
-
-```json
-{
-  "mcpServers": {
-    "wow-forever": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever-mcp"] }
-  }
-}
-```
-
-Try it from a checkout in the MCP Inspector:
+## Develop
 
 ```sh
 npm install
-npx @modelcontextprotocol/inspector node src/index.js
-```
-
-## Test
-
-```sh
 npm test
 ```
 
-The tests read every source live, so a failure usually means a page layout or API changed.
+The tests read every source live, so a failure usually means a page layout or API changed. Try the server in the MCP Inspector with `npx @modelcontextprotocol/inspector node src/index.js`, and the plugin with `claude --plugin-dir .`.
+
+World of Warcraft is a trademark of Blizzard Entertainment. This project is not affiliated with Blizzard, Wowhead or Raider.IO.
