@@ -23,15 +23,9 @@ Works in the terminal, the Code tab of the Claude desktop app and the IDE extens
 /plugin install wow-forever@wow-forever
 ```
 
-### Other apps
+### Claude app
 
-The MCP server runs in any MCP host. For Codex:
-
-```sh
-codex mcp add wow-forever -- npx -y github:miyanko-dev/wow-forever
-```
-
-For the Claude desktop app, add this to `claude_desktop_config.json`:
+In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `miyanko-dev/wow-forever`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
 
 ```json
 {
@@ -41,11 +35,20 @@ For the Claude desktop app, add this to `claude_desktop_config.json`:
 }
 ```
 
-The skill alone, for agents that read Agent Skills:
+Restart the app afterwards.
+
+### Codex
+
+Works in the Codex CLI and in Codex in the ChatGPT desktop app, which reads the same marketplace. Start a new session afterwards.
 
 ```sh
-npx skills add miyanko-dev/wow-forever
+codex plugin marketplace add miyanko-dev/wow-forever
+codex plugin add wow-forever@wow-forever
 ```
+
+### Other agents
+
+The MCP server runs in any MCP host with `npx -y github:miyanko-dev/wow-forever`. The skill alone installs with `npx skills add miyanko-dev/wow-forever`.
 
 ## Usage
 
