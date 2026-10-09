@@ -3,7 +3,8 @@
 ## Rules
 
 - One public repo is the Claude Code plugin, its marketplace (`source: "./"`), the Agent Skill in `skills/wow-forever/` and the MCP server in `src/`, all named `wow-forever`.
-- `.mcp.json` starts the server with `npx -y github:miyanko-dev/wow-forever`, because Claude Code runs no `npm install` for plugins. npx installs the package from `main`, so `main` must always run.
+- `.mcp.json` starts the server with `npx -y github:miyanko-dev/wow-forever#vX.Y.Z`, because Claude Code runs no `npm install` for plugins. The tag pins each installed plugin to its own server, so skill and tools never drift and `main` can break without reaching users.
+- MCP-only users run `github:miyanko-dev/wow-forever#semver:^1`, which follows the newest 1.x tag. A breaking tool change needs a major version and the README updated to the new range.
 - WoW Forever comes first: tools default to `game: forever`, and the skill names the version in every answer. Other versions stay available because Wowhead serves them through the same prefixes.
 - Personal, non-commercial use only. Wowhead's EULA, Blizzard's website terms and Raider.IO's terms forbid commercial use without written permission, and Anthropic's directory policy wants control over every fetched site, so the plugin is not submitted there (checked 2026-10-09).
 - Keep tool output plain text. `get_page` returns long pages in parts of `PAGE_CHARS` through `pagePart`, so no page loses its end.
@@ -26,7 +27,7 @@
 
 ## Release
 
-1. Bump `version` in `.claude-plugin/plugin.json` and `package.json` together, or installed copies never update.
+1. Bump `version` in `.claude-plugin/plugin.json`, `package.json` and `package-lock.json`, and the tag in `.mcp.json`, to the same value. Installed copies only update when the plugin version changes.
 2. Run the checks and fix every warning.
 3. Add the changes to `CHANGELOG.md`.
 4. Push and wait for the Validate workflow to pass.

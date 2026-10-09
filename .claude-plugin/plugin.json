@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "wow-forever",
   "displayName": "WoW Forever",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Everything about WoW Forever in Claude: items, drops, quests, NPCs, spells, talents, guides, news and patch notes from Wowhead, read in full by a bundled MCP server and summed up with sources. Other WoW versions work when named.",
   "author": {
     "name": "miyanko",

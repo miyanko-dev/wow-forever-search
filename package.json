@@ -1,6 +1,6 @@
 {
   "name": "wow-forever",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Claude Code plugin and MCP server for WoW Forever information from Wowhead, plus retail characters from the official armory and Raider.IO.",
   "type": "module",

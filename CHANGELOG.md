@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 (2026-10-09)
+
+- The plugin runs the server from its own release tag instead of `main`, so skill and tools always match.
+- MCP-only setups follow the newest 1.x release with `#semver:^1`.
+
 ## 1.0.0 (2026-10-09)
 
 - First release as one plugin. Brings the WoW Forever MCP server, formerly `wow-forever-mcp` 3.1.0, and the skill, formerly the `wow-research` plugin, together in one repo.

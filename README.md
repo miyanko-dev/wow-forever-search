@@ -30,7 +30,7 @@ In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `miy
 ```json
 {
   "mcpServers": {
-    "wow-forever": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever"] }
+    "wow-forever": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever#semver:^1"] }
   }
 }
 ```
@@ -48,7 +48,7 @@ codex plugin add wow-forever@wow-forever
 
 ### Other agents
 
-The MCP server runs in any MCP host with `npx -y github:miyanko-dev/wow-forever`. The skill alone installs with `npx skills add miyanko-dev/wow-forever`.
+The MCP server runs in any MCP host with `npx -y github:miyanko-dev/wow-forever#semver:^1`, which always runs the newest 1.x release. The skill alone installs with `npx skills add miyanko-dev/wow-forever`.
 
 ## Usage
 
