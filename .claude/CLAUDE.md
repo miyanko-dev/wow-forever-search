@@ -1,10 +1,10 @@
-# wow-forever
+# wow-forever-search
 
 ## Rules
 
-- One public repo is the Claude Code plugin, its marketplace (`source: "./"`), the Agent Skill in `skills/wow-forever/` and the MCP server in `src/`, all named `wow-forever`.
-- `.mcp.json` starts the server with `npx -y github:miyanko-dev/wow-forever#vX.Y.Z`, because Claude Code runs no `npm install` for plugins. The tag pins each installed plugin to its own server, so skill and tools never drift and `main` can break without reaching users.
-- MCP-only users run `github:miyanko-dev/wow-forever#semver:^1`, which follows the newest 1.x tag. A breaking tool change needs a major version and the README updated to the new range.
+- One public repo is the Claude Code plugin, its marketplace (`source: "./"`), the Agent Skill in `skills/wow-forever-search/` and the MCP server in `src/`, all named `wow-forever-search`.
+- `.mcp.json` starts the server with `npx -y github:miyanko-dev/wow-forever-search#vX.Y.Z`, because Claude Code runs no `npm install` for plugins. The tag pins each installed plugin to its own server, so skill and tools never drift and `main` can break without reaching users.
+- MCP-only users run `github:miyanko-dev/wow-forever-search#semver:^1`, which follows the newest 1.x tag. A breaking tool change needs a major version and the README updated to the new range.
 - WoW Forever comes first: tools default to `game: forever`, and the skill names the version in every answer. Other versions stay available because Wowhead serves them through the same prefixes.
 - Personal, non-commercial use only. Wowhead's EULA, Blizzard's website terms and Raider.IO's terms forbid commercial use without written permission, and Anthropic's directory policy wants control over every fetched site, so the plugin is not submitted there (checked 2026-10-09).
 - Keep tool output plain text. `get_page` returns long pages in parts of `PAGE_CHARS` through `pagePart`, so no page loses its end.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 (2026-10-09)
+
+- Renamed to `wow-forever-search`: repo, plugin, marketplace, skill, MCP server and package. Reinstall with `/plugin marketplace add miyanko-dev/wow-forever-search`. MCP-only setups keep working through GitHub's redirect, and the README has the new name.
+
 ## 1.0.1 (2026-10-09)
 
 - The plugin runs the server from its own release tag instead of `main`, so skill and tools always match.

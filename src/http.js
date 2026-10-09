@@ -1,4 +1,4 @@
-const USER_AGENT = 'wow-forever (+https://github.com/miyanko-dev/wow-forever)';
+const USER_AGENT = 'wow-forever-search (+https://github.com/miyanko-dev/wow-forever-search)';
 
 // Every source sees who is asking, so a site owner can reach us instead of blocking blindly.
 export async function request(url) {

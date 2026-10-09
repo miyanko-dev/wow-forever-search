@@ -1,11 +1,11 @@
 ---
-name: wow-forever
-description: "answer any question about wow forever, and other world of warcraft versions when named, through the wow-forever mcp tools (search, get_page, get_news, character). use for items, drops, quests, npcs, spells, talents, classes, professions, guides, news, patch notes, beta builds and class changes, retail character checkups, and whenever a wowhead link appears. looks everything up instead of answering from memory, and turns long patch notes into short per-class overviews with before and after values and source links."
+name: wow-forever-search
+description: "answer any question about wow forever, and other world of warcraft versions when named, through the wow-forever-search mcp tools (search, get_page, get_news, character). use for items, drops, quests, npcs, spells, talents, classes, professions, guides, news, patch notes, beta builds and class changes, retail character checkups, and whenever a wowhead link appears. looks everything up instead of answering from memory, and turns long patch notes into short per-class overviews with before and after values and source links."
 ---
 
-# WoW Forever
+# WoW Forever Search
 
-Answer questions about WoW Forever, or another World of Warcraft version when the user names one, from the wow-forever MCP tools. Look everything up, never answer stats, drop chances, coordinates, quest steps or numbers from memory.
+Answer questions about WoW Forever, or another World of Warcraft version when the user names one, from the wow-forever-search MCP tools. Look everything up, never answer stats, drop chances, coordinates, quest steps or numbers from memory.
 
 ## Version
 

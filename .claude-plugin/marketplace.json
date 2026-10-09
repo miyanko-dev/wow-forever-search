@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "wow-forever",
+  "name": "wow-forever-search",
   "description": "Everything about WoW Forever in Claude: items, drops, quests, NPCs, spells, talents, guides, news and patch notes from Wowhead, read in full by a bundled MCP server and summed up with sources. Other WoW versions work when named.",
   "owner": {
     "name": "miyanko",
@@ -8,7 +8,7 @@
   },
   "plugins": [
     {
-      "name": "wow-forever",
+      "name": "wow-forever-search",
       "source": "./",
       "description": "Everything about WoW Forever in Claude: items, drops, quests, NPCs, spells, talents, guides, news and patch notes from Wowhead, read in full by a bundled MCP server and summed up with sources. Other WoW versions work when named.",
       "category": "productivity"

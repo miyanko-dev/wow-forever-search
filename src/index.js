@@ -61,7 +61,7 @@ async function character(region, realm, name) {
 }
 
 serveStdio(() => {
-  const server = new McpServer({ name: 'wow-forever', version: pkg.version });
+  const server = new McpServer({ name: 'wow-forever-search', version: pkg.version });
 
   server.registerTool('search', {
     title: 'Search Wowhead',

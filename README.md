@@ -1,4 +1,4 @@
-# WoW Forever
+# WoW Forever Search
 
 Lets Claude answer anything about WoW Forever: items, drops, quests, NPCs, spells, talents, guides, news and patch notes. A bundled MCP server reads Wowhead in full, and a skill turns what it finds into short answers with sources. Other World of Warcraft versions work when you name them.
 
@@ -19,18 +19,18 @@ Requires Node 22 or later and git.
 Works in the terminal, the Code tab of the Claude desktop app and the IDE extensions.
 
 ```
-/plugin marketplace add miyanko-dev/wow-forever
-/plugin install wow-forever@wow-forever
+/plugin marketplace add miyanko-dev/wow-forever-search
+/plugin install wow-forever-search@wow-forever-search
 ```
 
 ### Claude app
 
-In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `miyanko-dev/wow-forever`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
+In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `miyanko-dev/wow-forever-search`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
 
 ```json
 {
   "mcpServers": {
-    "wow-forever": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever#semver:^1"] }
+    "wow-forever-search": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever-search#semver:^1"] }
   }
 }
 ```
@@ -42,25 +42,25 @@ Restart the app afterwards.
 Works in the Codex CLI and in Codex in the ChatGPT desktop app, which reads the same marketplace. Start a new session afterwards.
 
 ```sh
-codex plugin marketplace add miyanko-dev/wow-forever
-codex plugin add wow-forever@wow-forever
+codex plugin marketplace add miyanko-dev/wow-forever-search
+codex plugin add wow-forever-search@wow-forever-search
 ```
 
 ### Other agents
 
-The MCP server runs in any MCP host with `npx -y github:miyanko-dev/wow-forever#semver:^1`, which always runs the newest 1.x release. The skill alone installs with `npx skills add miyanko-dev/wow-forever`.
+The MCP server runs in any MCP host with `npx -y github:miyanko-dev/wow-forever-search#semver:^1`, which always runs the newest 1.x release. The skill alone installs with `npx skills add miyanko-dev/wow-forever-search`.
 
 ## Usage
 
 ```
-/wow-forever <question or Wowhead link>
+/wow-forever-search <question or Wowhead link>
 ```
 
 Examples:
 
-- `/wow-forever paladin, hunter, priest and rogue changes in the latest beta build`
-- `/wow-forever where does Thunderfury drop?`
-- `/wow-forever how do I start the Onyxia attunement in classic?`
+- `/wow-forever-search paladin, hunter, priest and rogue changes in the latest beta build`
+- `/wow-forever-search where does Thunderfury drop?`
+- `/wow-forever-search how do I start the Onyxia attunement in classic?`
 
 It also triggers on its own for WoW questions and Wowhead links.
 
