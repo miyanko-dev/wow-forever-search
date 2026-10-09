@@ -71,7 +71,18 @@ export async function getWowheadPage(input) {
     section('Article', isEntity ? truncate(article, 4000) : article),
     section('Top comments', topComments(html, names)),
   ];
-  return truncate(sections.filter(Boolean).join('\n\n'), PAGE_CHARS);
+  return sections.filter(Boolean).join('\n\n');
+}
+
+// Long pages come in parts, so small models keep their context and nothing is lost.
+// Parts end at a line break, so entries stay whole.
+export function pagePart(text, offset = 0) {
+  if (offset >= text.length) return `Nothing at offset ${offset}. The page has ${text.length} characters.`;
+  if (text.length - offset <= PAGE_CHARS) return text.slice(offset);
+  const lineEnd = text.lastIndexOf('\n', offset + PAGE_CHARS);
+  const end = lineEnd > offset ? lineEnd : offset + PAGE_CHARS;
+  return `${text.slice(offset, end).trimEnd()}\n\n[Part ends at ${end} of ${text.length} characters. `
+    + `Call get_page with offset ${end} for the next part.]`;
 }
 
 export async function getNews(game = 'forever') {

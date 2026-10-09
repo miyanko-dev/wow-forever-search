@@ -40,6 +40,15 @@ export function markupToText(markup, names = new Map()) {
 
     // Hover popups and images carry no readable text.
     .replace(/\[(tooltip|screenshot|img)\b[^\]]*\][\s\S]*?\[\/\1\]/g, '')
+
+    // Patch notes mark old and new text, which would otherwise run together, like 3852 for 38 to 52.
+    .replace(/\[del\b[^\]]*\]([\s\S]*?)\[\/del\]\[ins\]([\s\S]*?)\[\/ins\]/g, '$2 (was $1)')
+    .replace(/\[ins\]([\s\S]*?)\[\/ins\]/g, '(new: $1)')
+    .replace(/\[del\b[^\]]*\]([\s\S]*?)\[\/del\]/g, '(removed: $1)')
+
+    // Collapsible sections carry their title only as an attribute, like the class names in patch notes.
+    .replace(/\[toggler\b[^\]]*?\bname="([^"]+)"[^\]]*\]/g, '\n\n## $1\n')
+    .replace(/\[html\]([\s\S]*?)\[\/html\]/g, (match, html) => htmlToText(html))
     .replace(/\[([a-z][\w-]*)=(\d+)\b[^\]]*\]/g, (match, tag, id) => {
       if (!ENTITY_TAGS.has(tag)) return match;
       const type = tag === 'itemset' ? 'item-set' : tag;

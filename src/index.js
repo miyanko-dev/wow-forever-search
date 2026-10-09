@@ -6,7 +6,7 @@ import * as z from 'zod/v4';
 import pkg from '../package.json' with { type: 'json' };
 import { getArmoryCharacter } from './armory.js';
 import { getAffixes, getRaiderIo, REGIONS } from './raiderio.js';
-import { GAMES, getNews, getWowheadPage, lookup } from './wowhead.js';
+import { GAMES, getNews, getWowheadPage, lookup, pagePart } from './wowhead.js';
 
 const CACHE_MS = 60 * 60 * 1000;
 const CACHE_SIZE = 300;
@@ -74,12 +74,14 @@ serveStdio(() => {
   server.registerTool('get_page', {
     title: 'Read a Wowhead page',
     description: 'Read a Wowhead page as text: tooltip, quick facts, map coordinates, quest text, drop sources with chances, '
-      + 'vendors, rewards, abilities, guides and top comments. Guide hubs like https://www.wowhead.com/forever/guides list the guides.',
+      + 'vendors, rewards, abilities, guides and top comments. Guide hubs like https://www.wowhead.com/forever/guides list the guides. '
+      + 'Long pages, like patch notes, come in parts that end with the offset of the next part.',
     inputSchema: z.object({
       url: z.string().min(1).max(300).describe('Wowhead URL from search results or the user, like https://www.wowhead.com/forever/item=19019'),
+      offset: z.number().int().min(0).default(0).describe('Where to continue a long page, from the end of the previous part'),
     }),
     annotations: hints,
-  }, async ({ url }) => text(await cached(`page:${url}`, () => readPage(url))));
+  }, async ({ url, offset }) => text(pagePart(await cached(`page:${url}`, () => readPage(url)), offset)));
 
   server.registerTool('get_news', {
     title: 'Latest WoW news',

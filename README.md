@@ -7,7 +7,7 @@ MCP server for World of Warcraft information, focused on WoW Forever: items, NPC
 | Tool | Input | Returns |
 |---|---|---|
 | `search` | `query`, `game` | Wowhead items, NPCs, quests and spells whose names match, with their URLs |
-| `get_page` | `url` | A Wowhead page as text: tooltip, quick facts, map coordinates, quest text, drop sources with chances, vendors, abilities, guides and top comments |
+| `get_page` | `url`, `offset` | A Wowhead page as text: tooltip, quick facts, map coordinates, quest text, drop sources with chances, vendors, abilities, guides and top comments. Long pages come in parts, each naming the `offset` of the next |
 | `get_news` | `game` | The 10 latest Wowhead news posts, plus this week's Mythic+ affixes for retail |
 | `character` | `region`, `realm`, `name` | A retail character from the official armory (level, spec, item level, gear, guild, Mythic+ rating) and Raider.IO (Mythic+ score, best runs, raid progress) |
 

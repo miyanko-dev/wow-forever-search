@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { getArmoryCharacter } from '../src/armory.js';
 import { getAffixes, getRaiderIo } from '../src/raiderio.js';
 import { htmlToText, markupToText } from '../src/text.js';
-import { getNews, getWowheadPage, lookup } from '../src/wowhead.js';
+import { getNews, getWowheadPage, lookup, pagePart } from '../src/wowhead.js';
 
 // The live checks read every source, so they fail when a layout or API the parsers rely on changes.
 
@@ -83,6 +83,18 @@ test('markup becomes text with entity names and coins', () => {
   const names = new Map([['item', 'x'], ['item=19019', 'Thunderfury']]);
   const markup = '[b]Get[/b] [item=19019] and [quest=7787] for [money=123456].[ul][li]One[/li][/ul][tooltip name=x]hidden[/tooltip][Bracketed]';
   assert.equal(markupToText(markup, names), 'Get Thunderfury and quest 7787 for 12g 34s 56c.\n- One\n[Bracketed]');
+});
+
+test('patch notes keep old and new values and section names', () => {
+  const markup = '[toggler name="Hunter" size=3]Bite for [del copy=true]5[/del][ins]10[/ins] sec[ins] at once[/ins].[del]Old line[/del]';
+  assert.equal(markupToText(markup), '## Hunter\nBite for 10 (was 5) sec(new: at once).(removed: Old line)');
+});
+
+test('long pages come in parts that end at a line break and name the next offset', () => {
+  const page = `${'a'.repeat(9000)}\n${'b'.repeat(9000)}`;
+  assert.match(pagePart(page), /^a{9000}\n\n\[Part ends at 9000 of 18001 characters\. Call get_page with offset 9000/);
+  assert.equal(pagePart(page, 9000), `\n${'b'.repeat(9000)}`);
+  assert.match(pagePart(page, 20000), /^Nothing at offset 20000/);
 });
 
 test('tooltip html becomes lines with coin units', () => {

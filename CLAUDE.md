@@ -7,5 +7,5 @@
 - Blizzard's armory pages are open to bots and carry the character as `characterProfileInitialState`. Unknown characters answer 500. WoW Forever has no realms and two-part names, so check the URL scheme once Blizzard adds Forever characters.
 - `curl` gets a CloudFront 403 from www.wowhead.com, while Node's `fetch` and Python's `urllib` get through. Probe pages with `node -e`.
 - The Wowhead parser depends on these page markers: `g_pageInfo`, `WH.Gatherer.addData`, `WH.markup.printHtml`, `new Listview`, `lv_comments0`, `g_mapperData` and the main column `<div class="text">`. Page data is JSON with some JavaScript fields, which `parseJson` in `src/embedded.js` handles.
-- Tool output feeds small free models in the Discord bot, so keep it plain text and under `PAGE_CHARS`.
+- Tool output feeds small free models in the Discord bot, so keep it plain text. `get_page` returns long pages in parts of `PAGE_CHARS` through `pagePart`, so no page loses its end.
 - Run `npm test` after every change to `src/`. It reads every source live.
