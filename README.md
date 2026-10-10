@@ -49,6 +49,8 @@ codex plugin add wow-forever-search@studio-miyanko
 
 The MCP server runs in any MCP host with `npx -y github:studio-miyanko/wow-forever-search#semver:^1`, which always runs the newest 1.x release. The skill alone installs with `npx skills add studio-miyanko/wow-forever-search`.
 
+To host the tools in your own code, such as a Cloudflare Worker, import `createServer` from `wow-forever-search/src/server.js` and connect it to any MCP transport.
+
 ## Usage
 
 ```

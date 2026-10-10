@@ -2,7 +2,7 @@
   "mcpServers": {
     "wow-forever-search": {
       "command": "npx",
-      "args": ["-y", "github:studio-miyanko/wow-forever-search#v1.0.0"]
+      "args": ["-y", "github:studio-miyanko/wow-forever-search#v1.1.0"]
     }
   }
 }
