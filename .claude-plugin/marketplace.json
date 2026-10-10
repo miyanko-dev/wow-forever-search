@@ -4,7 +4,7 @@
   "description": "Search WoW Forever in Claude: items, drops, quests, NPCs, spells, talents, guides, news and patch notes from Wowhead's WoW Forever data only, read in full by a bundled MCP server and summed up with sources.",
   "owner": {
     "name": "miyanko",
-    "url": "https://github.com/miyanko-dev"
+    "url": "https://github.com/studio-miyanko"
   },
   "plugins": [
     {

@@ -18,18 +18,18 @@ Requires Node 22 or later and git.
 Works in the terminal, the Code tab of the Claude desktop app and the IDE extensions.
 
 ```
-/plugin marketplace add miyanko-dev/wow-forever-search
+/plugin marketplace add studio-miyanko/wow-forever-search
 /plugin install wow-forever-search@wow-forever-search
 ```
 
 ### Claude app
 
-In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `miyanko-dev/wow-forever-search`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
+In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `studio-miyanko/wow-forever-search`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
 
 ```json
 {
   "mcpServers": {
-    "wow-forever-search": { "command": "npx", "args": ["-y", "github:miyanko-dev/wow-forever-search#semver:^1"] }
+    "wow-forever-search": { "command": "npx", "args": ["-y", "github:studio-miyanko/wow-forever-search#semver:^1"] }
   }
 }
 ```
@@ -41,13 +41,13 @@ Restart the app afterwards.
 Works in the Codex CLI and in Codex in the ChatGPT desktop app, which reads the same marketplace. Start a new session afterwards.
 
 ```sh
-codex plugin marketplace add miyanko-dev/wow-forever-search
+codex plugin marketplace add studio-miyanko/wow-forever-search
 codex plugin add wow-forever-search@wow-forever-search
 ```
 
 ### Other agents
 
-The MCP server runs in any MCP host with `npx -y github:miyanko-dev/wow-forever-search#semver:^1`, which always runs the newest 1.x release. The skill alone installs with `npx skills add miyanko-dev/wow-forever-search`.
+The MCP server runs in any MCP host with `npx -y github:studio-miyanko/wow-forever-search#semver:^1`, which always runs the newest 1.x release. The skill alone installs with `npx skills add studio-miyanko/wow-forever-search`.
 
 ## Usage
 
