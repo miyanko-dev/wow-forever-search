@@ -18,13 +18,13 @@ Requires Node 22 or later and git.
 Works in the terminal, the Code tab of the Claude desktop app and the IDE extensions.
 
 ```
-/plugin marketplace add studio-miyanko/wow-forever-search
-/plugin install wow-forever-search@wow-forever-search
+/plugin marketplace add studio-miyanko/claude-plugins
+/plugin install wow-forever-search@studio-miyanko
 ```
 
 ### Claude app
 
-In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `studio-miyanko/wow-forever-search`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
+In Chat or Cowork, open Customize, Plugins, Add, Add marketplace, and enter `studio-miyanko/claude-plugins`. Cowork sessions on your computer run the MCP server. Chat loads only the skill, so add the server there in Settings, Developer, Edit Config:
 
 ```json
 {
@@ -41,8 +41,8 @@ Restart the app afterwards.
 Works in the Codex CLI and in Codex in the ChatGPT desktop app, which reads the same marketplace. Start a new session afterwards.
 
 ```sh
-codex plugin marketplace add studio-miyanko/wow-forever-search
-codex plugin add wow-forever-search@wow-forever-search
+codex plugin marketplace add studio-miyanko/claude-plugins
+codex plugin add wow-forever-search@studio-miyanko
 ```
 
 ### Other agents
